@@ -1,0 +1,157 @@
+## DATA MANIPULATİON WİTH R STUDİO
+
+library(dplyr)
+library(tidyr)
+install.packages("tigris")
+library(sf)
+library(tigris)
+library(tidyverse)
+install.packages("devtools")
+library(devtools)
+devtools::install_github("deleetdk/USA.county.data")
+library(USA.county.data)
+
+
+counties <- USA_county_data
+counties_selected <- counties %>%
+  select(State, County, Total.Population, Unemployment)
+
+names(counties_selected)[names(counties_selected) == "Total.Population"] <- "population"
+names(counties_selected)[names(counties_selected) == "sate"] <- "state"
+names(counties_selected)[names(counties_selected) == "County"] <- "county"
+names(counties_selected)[names(counties_selected) == "Unemployment"] <- "unemployment"
+
+str(counties_selected)
+
+## Transforming Data with dplyr
+counties_selected %>%
+  arrange(population)
+
+counties_selected %>%
+  arrange(desc(population)) %>%
+  filter(state == "New York") ## filter(unmpleymont < 6)
+
+counties_selected %>%
+  mutate(unemployed_population = population * unemployment / 100) %>%
+  arrange(desc(unmployed_population))
+
+counties %>%
+  # Select the five columns 
+  select(state, county, population, men, women)%>%
+  # Add the proportion_men variable
+  mutate(proportion_men = men / population)%>%
+  # Filter for population of at least 10,000
+  filter(population > 10000)%>%
+  # Arrange proportion of men in descending order 
+  arrange(desc(proportion_men))
+
+## Aggregating Data
+
+counties %>%
+  count(counties$State, sort = TRUE)
+
+counties %>%
+  count(counties$State , wt = counties$Total.Population, sort = T)
+
+counties_selected %>%
+  select(state, population) %>%
+  count(state, wt = population , sort = T)
+
+## Aggregate and summarize 
+
+counties %>%
+  summarize(total_population = sum(counties$Total.Population),
+            average_unemployment = mean(counties$Unemployment))
+
+counties %>%
+  group_by(counties$State)%>%
+    summarize(total_population = sum(counties$Total.Population),
+            average_unemployment = mean(counties$Unemployment))
+
+attach(counties)
+
+counties %>%
+  select(State, County, Total.Population)
+
+counties %>%
+  group_by(State, County) %>%
+  summarize(total_pop = sum(Total.Population))
+
+counties_selected %>%
+  group_by(counties_selected$State, counties_selected$county) %>%
+  top_n(1, counties_selected$population)
+
+## Selected 
+
+counties%>%
+  select(State, County, contains("population"))
+
+counties%>%
+  select(State, County, starts_with("total"))
+
+-- 
+  
+  counties %>%
+  # Select the state, county, population, and those ending with "work"
+  select(state, county, population, ends_with("work"))%>%
+  # Filter for counties that have at least 50% of people engaged in public work
+  filter(public_work > 50.0)
+
+## transmute verb
+
+counties %>%
+  transmute(State, County, Total.Population, fraction_African.american.population = counties$African.American.Population/counties$Total.Population)
+
+## The babynames data
+
+install.packages("babynames")
+library(babynames)
+library(ggplot2)
+
+babynames_filtered <- babynames%>%
+  filter(name == "Amy")
+
+attach(babynames_filtered)
+
+ggplot(babynames_filtered, aes(x = year , y = n))+
+  geom_line()
+
+babynames_multiple <- babynames %>%
+  filter(name %in% c("Amy","Christoper"))
+
+babynames %>%
+  group_by(name)%>%
+  top_n(1, n)
+
+babynames_filt <- babynames%>%
+  filter(name %in% c("Emma","Margaret","Bertha"))
+
+ggplot(babynames_filt, aes(x = year, y = n, color = name))+
+  geom_line()
+
+babynames %>%
+  group_by(year)%>%
+  mutate(year_total = sum(n))%>%
+  ungroup()%>%
+  mutate(fraction = n/year_total)
+
+## window functions - lag
+
+babynames_fraction<- babynames %>%
+  group_by(year)%>%
+  mutate(year_total = sum(n))%>%
+  ungroup()%>%
+  mutate(fraction = n / year_total)
+  
+babynames_fraction %>%
+  filter(name == "Matthew")%>%
+  arrange(year)%>%
+  mutate(difference = fraction - lag(fraction))%>%
+  arrange(desc(difference))
+
+babynames_fraction%>%
+  select(name)%>%
+  group_by(name)
+  
+## We learn select(), filter(), mutate(), arrange(), count(), group_by(), summarize(), transmute(), rename() , babyname
+  
