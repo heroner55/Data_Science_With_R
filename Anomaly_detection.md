@@ -1,5 +1,5 @@
-# Data_Science_With_R
-Getting started with R.
+# Anomaly Detection With R
+## Getting started with R.
 install.packages("AnomalyDetection")
 library(AnomalyDetection)
 library(tidyverse)
